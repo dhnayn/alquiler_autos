@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto py-8 flex flex-col md:flex-row">
+    {% include "menu_lateral.html" %}
+    
+    <div class="w-full md:w-3/4 ml-0 md:ml-64">
+        <h1 class="text-2xl font-bold mb-4">{{ action }} Vehículo</h1>
+        <form method="POST" class="space-y-4">
+            <div>
+                <label for="marca" class="block font-bold">Marca:</label>
+                <input type="text" id="marca" name="marca" value="{{ vehicle['marca'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+            </div>
+            <div>
+                <label for="modelo" class="block font-bold">Modelo:</label>
+                <input type="text" id="modelo" name="modelo" value="{{ vehicle['modelo'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+            </div>
+            <div>
+                <label for="año" class="block font-bold">Año:</label>
+                <input type="text" id="año" name="año" value="{{ vehicle['año'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+            </div>
+            <div>
+                <label for="color" class="block font-bold">Color:</label>
+                <input type="text" id="color" name="color" value="{{ vehicle['color'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+            </div>
+            <button type="submit" class="bg-black text-white px-4 py-2 rounded">Guardar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

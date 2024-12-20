@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto py-8 text-center">
+    <h1 class="text-2xl font-bold mb-4">Contacto</h1>
+    <form method="POST" class="space-y-4 max-w-md mx-auto">
+        <div>
+            <label for="nombre" class="block font-bold text-sm">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+        <div>
+            <label for="correo" class="block font-bold text-sm">Correo Electrónico:</label>
+            <input type="email" id="correo" name="correo" class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+        <div>
+            <label for="telefono" class="block font-bold text-sm">Número de Teléfono:</label>
+            <input type="tel" id="telefono" name="telefono" class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+        <div>
+            <label for="mensaje" class="block font-bold text-sm">Mensaje:</label>
+            <textarea id="mensaje" name="mensaje" class="w-full border border-gray-300 p-2 rounded text-sm"></textarea>
+        </div>
+        <button type="submit" class="bg-black text-white px-4 py-2 rounded text-sm">Enviar</button>
+    </form>
+</div>
+{% endblock %}

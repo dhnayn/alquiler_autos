@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto py-8 text-center">
+    <h1 class="text-2xl font-bold mb-4">Iniciar Sesión</h1>
+    <form method="POST" class="space-y-4 max-w-md mx-auto">
+        <div>
+            <label for="email" class="block font-bold text-sm">Correo Electrónico:</label>
+            <input type="email" id="email" name="email" class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+        <div>
+            <label for="password" class="block font-bold text-sm">Contraseña:</label>
+            <input type="password" id="password" name="password" class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+        <button type="submit" class="bg-black text-white px-4 py-2 rounded text-sm">Entrar</button>
+    </form>
+</div>
+{% endblock %}

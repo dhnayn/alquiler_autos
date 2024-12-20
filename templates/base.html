@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1;
+        }
+        .dropdown-menu {
+            display: none;
+        }
+        .dropdown-menu.active {
+            display: block;
+        }
+    </style>
+    <title>Alquiler de Autos</title>
+</head>
+<body class="bg-white">
+    <header class="bg-black text-white py-2">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <div class="flex-1">
+                <img src="{{ url_for('static', filename='img/carro.jpg') }}" alt="Logo" class="w-12 h-12">
+            </div>
+
+            <!-- Botón de menú para dispositivos móviles -->
+            <button id="menu-toggle" class="block md:hidden text-white focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Menú de navegación (visible en pantallas grandes) -->
+            <nav class="hidden md:flex-1 md:flex justify-center items-center text-center">
+                <ul class="flex space-x-6 text-sm">
+                    <li><a href="{{ url_for('index') }}" class="hover:text-gray-300">Inicio</a></li>
+                    <li><a href="{{ url_for('contacto') }}" class="hover:text-gray-300">Contacto</a></li>
+                    <li><a href="{{ url_for('vehicles') }}" class="hover:text-gray-300">Vehículos</a></li>
+                </ul>
+            </nav>
+
+            <!-- Opciones de usuario/login (visible en pantallas grandes) -->
+            <div class="flex-1 text-right hidden md:block">
+                <ul class="flex justify-end space-x-4">
+                    {% if 'user_id' in session %}
+                        <!-- Si el usuario está logueado -->
+                        <li>
+                            <a href="#" class="hover:text-gray-300" id="account-menu-toggle">
+                                <i class="fas fa-user-circle"></i> {{ session['username'] }}
+                            </a>
+                            <!-- Menú desplegable -->
+                            <div id="dropdown-menu" class="dropdown-menu absolute bg-black text-white py-2 px-4 mt-2 right-0 w-48 rounded-md shadow-lg">
+                                <ul>
+                                    {% if session['role'] == 'admin' %}
+                                        <!-- Mostrar Dashboard solo para administradores -->
+                                        <li><a href="{{ url_for('view_vehicles') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Dashboard</a></li>
+                                    {% endif %}
+                                    <!-- Mostrar estas opciones para cualquier usuario logueado -->
+                                    <li><a href="{{ url_for('vehicles') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Ver Vehículos</a></li>
+                                    <li><a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Cerrar sesión</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    {% else %}
+                        <!-- Si el usuario no está logueado -->
+                        <li><a href="{{ url_for('login') }}" class="hover:text-gray-300">Iniciar sesión</a></li>
+                        <li><a href="{{ url_for('register') }}" class="hover:text-gray-300">Registrarse</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-black text-white py-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2024 Alquiler de Autos</p>
+        </div>
+    </footer>
+
+    <script>
+        // Funcionalidad para abrir/cerrar el menú móvil
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            var menu = document.getElementById('menu-toggle');
+            menu.classList.toggle('active');
+            var nav = document.querySelector('nav');
+            nav.classList.toggle('hidden');
+        });
+
+        // Funcionalidad para abrir/cerrar el menú desplegable de cuenta
+        document.getElementById('account-menu-toggle').addEventListener('click', function() {
+            var dropdownMenu = document.getElementById('dropdown-menu');
+            dropdownMenu.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>

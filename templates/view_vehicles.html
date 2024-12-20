@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto py-8 flex flex-col md:flex-row">
+    <!-- Sidebar (Menú lateral) -->
+    {% include "menu_lateral.html" %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-semibold">Vehículos</h1>
+    <table class="min-w-full mt-4">
+        <thead>
+            <tr>
+                <th class="px-4 py-2">Marca</th>
+                <th class="px-4 py-2">Modelo</th>
+                <th class="px-4 py-2">Año</th>
+                <th class="px-4 py-2">Color</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehiculo in vehiculos %}
+                <tr>
+                    <td class="px-4 py-2">{{ vehiculo.marca }}</td>
+                    <td class="px-4 py-2">{{ vehiculo.modelo }}</td>
+                    <td class="px-4 py-2">{{ vehiculo.año }}</td>
+                    <td class="px-4 py-2">{{ vehiculo.color }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
