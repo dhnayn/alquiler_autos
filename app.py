@@ -34,9 +34,8 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        role = 'usuario'  # Por defecto, el rol es "usuario"
-        hashed_password = generate_password_hash(password)  # Hash para mayor seguridad
-
+        role = 'usuario'  
+        hashed_password = generate_password_hash(password)  
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute("INSERT INTO usuarios (username, email, password, role) VALUES (%s, %s, %s, %s)",
@@ -67,11 +66,11 @@ def login():
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             session['username'] = user['username']
-            session['role'] = user['role']  # Guardar el rol en la sesión
-            flash(f'Bienvenido, {user["username"]}!', 'success')  # Mensaje de éxito
+            session['role'] = user['role']  
+            flash(f'Bienvenido, {user["username"]}!', 'success')  
             return redirect(url_for('vehicles'))
         else:
-            flash('Credenciales inválidas. Inténtalo de nuevo.', 'danger')  # Mensaje de error
+            flash('Credenciales inválidas. Inténtalo de nuevo.', 'danger')  
 
     return render_template('login.html')
 
@@ -106,7 +105,7 @@ def view_vehicles():
     connection.close()
     return render_template('view_vehicles.html', vehiculos=vehiculos)
 
-# Ruta para agregar un vehículo (solo admin puede agregar)
+# Ruta para agregar un vehículo 
 @app.route('/add_vehicle', methods=['GET', 'POST'])
 def add_vehicle():
     if 'user_id' not in session or session['role'] != 'admin':
@@ -173,7 +172,7 @@ def edit_vehicle(id):
     connection.close()
     return render_template('edit_vehicle.html', vehicle=vehicle, action="Editar" if vehicle else "Añadir")
 
-# Ruta para eliminar un vehículo (solo admin puede eliminar)
+# Ruta para eliminar un vehículo 
 @app.route('/delete_vehicle/<int:id>', methods=['POST'])
 def delete_vehicle(id):
     if 'user_id' not in session or session['role'] != 'admin':
