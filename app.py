@@ -9,10 +9,10 @@ app.config['SESSION_TYPE'] = 'filesystem'
 # Función para obtener la conexión a la base de datos
 def get_db_connection():
     connection = pymysql.connect(
-        host="sql312.infinityfree.com",
-        user="if0_37957897",
-        password="4sDx6JTC9eo",
-        database="if0_37957897_alquiler_autos",
+        host="sql10.freemysqlhosting.net",
+        user="sql10753323",
+        password="9eTIyjYawF",
+        database="sql10753323",
         cursorclass=pymysql.cursors.DictCursor
     )
     return connection
