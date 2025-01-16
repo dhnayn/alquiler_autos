@@ -1,23 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto py-8 flex flex-col md:flex-row">
-
-
-    <!-- Main Section -->
-    <section class="w-full md:w-3/4">
-        <h1 class="text-2xl font-bold mb-4">Catálogo de Vehículos</h1>
-        <div class="relative">
-            <div id="carousel" class="flex overflow-x-auto space-x-4">
-                {% for vehiculo in vehiculos %}
-                <div class="flex-shrink-0 w-64 bg-gray-100 p-4 rounded-lg">
-                    <img src="{{ url_for('static', filename='img/carro.jpg') }}" alt="Carro" class="w-full h-40 object-cover rounded">
-                    <h2 class="text-lg font-semibold mt-2">{{ vehiculo['marca'] }} {{ vehiculo['modelo'] }}</h2>
-                    <p>{{ vehiculo['año'] }} - {{ vehiculo['color'] }}</p>
-                </div>
-                {% endfor %}
-            </div>
+<div class="container mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-4">Catálogo de Vehículos</h1>
+    
+    <!-- Contenedor de vehículos -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {% for vehiculo in vehiculos %}
+        <div class="bg-gray-100 p-4 rounded-lg">
+            <img src="{{ url_for('static', filename='img/carro.jpg') }}" alt="Carro" class="w-full h-40 object-cover rounded">
+            <h2 class="text-lg font-semibold mt-2">{{ vehiculo['marca'] }} {{ vehiculo['modelo'] }}</h2>
+            <p>{{ vehiculo['año'] }} - {{ vehiculo['color'] }}</p>
+            <p><strong>Precio:</strong> ${{ vehiculo['precio_dia'] }} por día</p>
+            <a href="{{ url_for('reserve_vehicle', vehicle_id=vehiculo['id']) }}" class="block text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">Reservar</a>
         </div>
-    </section>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    <div class="mt-4 flex justify-center space-x-4">
+        {% if page > 1 %}
+        <a href="{{ url_for('vehicles', page=page-1) }}" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Anterior</a>
+        {% endif %}
+        
+        {% for i in range(1, total_pages+1) %}
+        <a href="{{ url_for('vehicles', page=i) }}" class="px-4 py-2 {{ 'bg-blue-500' if i == page else 'bg-gray-300' }} text-white rounded-md hover:bg-blue-600">{{ i }}</a>
+        {% endfor %}
+        
+        {% if page < total_pages %}
+        <a href="{{ url_for('vehicles', page=page+1) }}" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Siguiente</a>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

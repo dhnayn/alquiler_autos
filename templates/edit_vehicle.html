@@ -9,19 +9,38 @@
         <form method="POST" class="space-y-4">
             <div>
                 <label for="marca" class="block font-bold">Marca:</label>
-                <input type="text" id="marca" name="marca" value="{{ vehicle['marca'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+                <input type="text" id="marca" name="marca" value="{{ vehicle['marca'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
             </div>
             <div>
                 <label for="modelo" class="block font-bold">Modelo:</label>
-                <input type="text" id="modelo" name="modelo" value="{{ vehicle['modelo'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+                <input type="text" id="modelo" name="modelo" value="{{ vehicle['modelo'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
             </div>
             <div>
                 <label for="año" class="block font-bold">Año:</label>
-                <input type="text" id="año" name="año" value="{{ vehicle['año'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+                <input type="text" id="año" name="año" value="{{ vehicle['año'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
             </div>
             <div>
                 <label for="color" class="block font-bold">Color:</label>
-                <input type="text" id="color" name="color" value="{{ vehicle['color'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded">
+                <input type="text" id="color" name="color" value="{{ vehicle['color'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
+            </div>
+            <div>
+                <label for="placas" class="block font-bold">Placas:</label>
+                <input type="text" id="placas" name="placas" value="{{ vehicle['placas'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
+            </div>
+            <div>
+                <label for="estado" class="block font-bold">Estado:</label>
+                <select id="estado" name="estado" class="w-full border border-gray-300 p-2 rounded" required>
+                    <option value="Disponible" {% if vehicle and vehicle['estado'] == 'Disponible' %}selected{% endif %}>Disponible</option>
+                    <option value="No disponible" {% if vehicle and vehicle['estado'] == 'No disponible' %}selected{% endif %}>No disponible</option>
+                </select>
+            </div>
+            <div>
+                <label for="kilometraje" class="block font-bold">Kilometraje:</label>
+                <input type="number" id="kilometraje" name="kilometraje" value="{{ vehicle['kilometraje'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
+            </div>
+            <div>
+                <label for="precio_dia" class="block font-bold">Precio/Día:</label>
+                <input type="number" step="0.01" id="precio_dia" name="precio_dia" value="{{ vehicle['precio_dia'] if vehicle else '' }}" class="w-full border border-gray-300 p-2 rounded" required>
             </div>
             <button type="submit" class="bg-black text-white px-4 py-2 rounded">Guardar</button>
         </form>

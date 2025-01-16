@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-4">{{ vehicle['marca'] }} {{ vehicle['modelo'] }}</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <img src="{{ url_for('static', filename='img/carro.jpg') }}" alt="Imagen del vehículo" class="w-full h-auto rounded-lg">
+        <div>
+            <p><strong>Año:</strong> {{ vehicle['año'] }}</p>
+            <p><strong>Color:</strong> {{ vehicle['color'] }}</p>
+            <p><strong>Kilometraje:</strong> {{ vehicle['kilometraje'] }} km</p>
+            <p><strong>Placas:</strong> {{ vehicle['placas'] }}</p>
+            <p><strong>Estado:</strong> {{ vehicle['estado'] }}</p>
+            <p><strong>Precio por día:</strong> ${{ vehicle['precio_dia'] }}</p>
+            
+            {% if session['role'] == 'usuario' or session['role'] == 'admin' %}
+            <a href="{{ url_for('create_reservation', vehicle_id=vehicle['id']) }}" class="mt-4 inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Reservar
+            </a>
+            {% else %}
+            <p class="mt-4 text-red-500">Solo los usuarios registrados pueden hacer reservas.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

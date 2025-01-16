@@ -9,10 +9,10 @@ app.config['SESSION_TYPE'] = 'filesystem'
 # Función para obtener la conexión a la base de datos
 def get_db_connection():
     connection = pymysql.connect(
-        host="sql10.freemysqlhosting.net",
-        user="sql10756621",
-        password="lz8Tk7kUqM",
-        database="sql10756621",
+        host="localhost",
+        user="root",
+        password="Pekvpass",
+        database="alquiler_autos",
         cursorclass=pymysql.cursors.DictCursor
     )
     return connection
@@ -83,13 +83,28 @@ def logout():
 # Ruta de vehículos (ya no requiere sesión)
 @app.route('/vehicles')
 def vehicles():
+    page = request.args.get('page', 1, type=int)
+    limit = 10  # Número de elementos por página
+    offset = (page - 1) * limit
+
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM vehiculos")
+    cursor.execute("SELECT * FROM vehiculos LIMIT %s OFFSET %s", (limit, offset))
     vehiculos = cursor.fetchall()
+
+    cursor.execute("SELECT COUNT(*) FROM vehiculos")
+    total_vehiculos = cursor.fetchone()['COUNT(*)']
+    total_pages = (total_vehiculos // limit) + (1 if total_vehiculos % limit > 0 else 0)
+
     cursor.close()
     connection.close()
-    return render_template('vehicles.html', vehiculos=vehiculos)
+
+    return render_template('vehicles.html', vehiculos=vehiculos, page=page, total_pages=total_pages)
+
+
+
+
+
 
 
 @app.route('/view_vehicles')
@@ -105,7 +120,6 @@ def view_vehicles():
     connection.close()
     return render_template('view_vehicles.html', vehiculos=vehiculos)
 
-# Ruta para agregar un vehículo 
 @app.route('/add_vehicle', methods=['GET', 'POST'])
 def add_vehicle():
     if 'user_id' not in session or session['role'] != 'admin':
@@ -116,12 +130,17 @@ def add_vehicle():
         modelo = request.form['modelo']
         año = request.form['año']
         color = request.form['color']
+        placas = request.form['placas']
+        estado = request.form['estado']
+        kilometraje = request.form['kilometraje']
+        precio_dia = request.form['precio_dia']
 
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO vehiculos (marca, modelo, año, color) VALUES (%s, %s, %s, %s)",
-            (marca, modelo, año, color)
+            "INSERT INTO vehiculos (marca, modelo, año, color, placas, estado, kilometraje, precio_dia) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (marca, modelo, año, color, placas, estado, kilometraje, precio_dia)
         )
         connection.commit()
         cursor.close()
@@ -150,16 +169,22 @@ def edit_vehicle(id):
         modelo = request.form['modelo']
         año = request.form['año']
         color = request.form['color']
+        placas = request.form['placas']
+        estado = request.form['estado']
+        kilometraje = request.form['kilometraje']
+        precio_dia = request.form['precio_dia']
 
         if vehicle:
             cursor.execute(
-                "UPDATE vehiculos SET marca = %s, modelo = %s, año = %s, color = %s WHERE id = %s",
-                (marca, modelo, año, color, id)
+                "UPDATE vehiculos SET marca = %s, modelo = %s, año = %s, color = %s, placas = %s, estado = %s, "
+                "kilometraje = %s, precio_dia = %s WHERE id = %s",
+                (marca, modelo, año, color, placas, estado, kilometraje, precio_dia, id)
             )
         else:
             cursor.execute(
-                "INSERT INTO vehiculos (marca, modelo, año, color) VALUES (%s, %s, %s, %s)",
-                (marca, modelo, año, color)
+                "INSERT INTO vehiculos (marca, modelo, año, color, placas, estado, kilometraje, precio_dia) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (marca, modelo, año, color, placas, estado, kilometraje, precio_dia)
             )
 
         connection.commit()
@@ -171,6 +196,7 @@ def edit_vehicle(id):
     cursor.close()
     connection.close()
     return render_template('edit_vehicle.html', vehicle=vehicle, action="Editar" if vehicle else "Añadir")
+
 
 # Ruta para eliminar un vehículo 
 @app.route('/delete_vehicle/<int:id>', methods=['POST'])
@@ -186,6 +212,7 @@ def delete_vehicle(id):
     connection.close()
     flash('Vehículo eliminado con éxito.', 'success')
     return redirect(url_for('view_vehicles'))
+
 
 
 @app.route('/manage_users')
@@ -219,6 +246,120 @@ def update_role(id):
     flash('Rol actualizado correctamente.', 'success')
     return redirect(url_for('manage_users'))
 
+
+@app.route('/reserve_vehicle/<int:vehicle_id>', methods=['GET', 'POST'])
+def reserve_vehicle(vehicle_id):
+    if 'user_id' not in session:
+        flash('Debes iniciar sesión para reservar un vehículo.', 'danger')
+        return redirect(url_for('login'))
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM vehiculos WHERE id = %s", (vehicle_id,))
+    vehicle = cursor.fetchone()
+
+    if not vehicle:
+        flash('El vehículo no existe.', 'danger')
+        return redirect(url_for('vehicles'))
+
+    if request.method == 'POST':
+        user_id = session['user_id']
+        nombre = request.form['nombre']
+        fecha_inicio = request.form['fecha_inicio']
+        fecha_fin = request.form['fecha_fin']
+        comentarios = request.form['comentarios']
+        
+        cursor.execute(
+            "INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) VALUES (%s, %s, %s, %s, %s, %s)",
+            (user_id, vehicle_id, nombre, fecha_inicio, fecha_fin, comentarios)
+        )
+        connection.commit()
+        flash('Reservación realizada exitosamente.', 'success')
+        return redirect(url_for('view_reservations'))
+
+    cursor.close()
+    connection.close()
+    return render_template('vehicle_details.html', vehicle=vehicle)
+
+
+@app.route('/view_reservations')
+def view_reservations():
+    if 'user_id' not in session:
+        flash('Debes iniciar sesión para ver tus reservaciones.', 'danger')
+        return redirect(url_for('login'))
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT r.id AS reserva_id, v.marca, v.modelo, v.año, v.color, v.precio_dia, r.fecha_inicio, r.fecha_fin, r.comentarios
+        FROM reserva r
+        JOIN vehiculos v ON r.vehiculo_id = v.id
+        WHERE r.user_id = %s
+    """, (session['user_id'],))
+    reservas = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('reservations.html', reservas=reservas)
+
+
+@app.route('/cancel_reservation/<int:reservation_id>', methods=['POST'])
+def cancel_reservation(reservation_id):
+    if 'user_id' not in session:
+        flash('Debes iniciar sesión para cancelar una reservación.', 'danger')
+        return redirect(url_for('login'))
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM reserva WHERE id = %s AND user_id = %s", (reservation_id, session['user_id']))
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    flash('Reservación cancelada con éxito.', 'success')
+    return redirect(url_for('view_reservations'))
+
+
+@app.route('/vehicle/<int:vehicle_id>/reserve', methods=['GET'])
+def create_reservation(vehicle_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM vehiculos WHERE id = %s", (vehicle_id,))
+    vehicle = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    
+    if not vehicle:
+        flash('El vehículo no existe.', 'danger')
+        return redirect(url_for('vehicles'))
+
+    return render_template('reservation_form.html', vehicle=vehicle)
+
+
+@app.route('/vehicle/<int:vehicle_id>/reserve', methods=['POST'])
+def save_reservation(vehicle_id):
+    if 'user_id' not in session:
+        flash('Debes iniciar sesión para realizar una reserva.', 'danger')
+        return redirect(url_for('login'))
+
+    nombre = request.form['nombre']
+    fecha_inicio = request.form['fecha_inicio']
+    fecha_fin = request.form['fecha_fin']
+    comentarios = request.form['comentarios']
+    
+    # Insertamos los datos de la reserva en la base de datos
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) VALUES (%s, %s, %s, %s, %s, %s)"
+    values = (session['user_id'], vehicle_id, nombre, fecha_inicio, fecha_fin, comentarios)
+    cursor.execute(query, values)
+    connection.commit()
+    
+    cursor.close()
+    connection.close()
+
+    flash('Reserva confirmada con éxito.', 'success')
+    return redirect(url_for('vehicles'))
 
 if __name__ == '__main__':
     app.run(debug=True)

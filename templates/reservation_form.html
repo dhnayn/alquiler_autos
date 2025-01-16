@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-4">Formulario de Reserva para {{ vehicle['marca'] }} {{ vehicle['modelo'] }}</h1>
+    <form action="{{ url_for('save_reservation', vehicle_id=vehicle['id']) }}" method="POST">
+        <div class="mb-4">
+            <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input type="text" id="nombre" name="nombre" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" required>
+        </div>
+
+        <div class="mb-4">
+            <label for="fecha_inicio" class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" required>
+        </div>
+
+        <div class="mb-4">
+            <label for="fecha_fin" class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+            <input type="date" id="fecha_fin" name="fecha_fin" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md" required>
+        </div>
+
+        <div class="mb-4">
+            <label for="comentarios" class="block text-sm font-medium text-gray-700">Comentarios</label>
+            <textarea id="comentarios" name="comentarios" rows="4" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"></textarea>
+        </div>
+
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Confirmar Reserva</button>
+    </form>
+</div>
+{% endblock %}
+

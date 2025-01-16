@@ -4,27 +4,47 @@
 <div class="container mx-auto py-8 flex flex-col md:flex-row">
     <!-- Sidebar (Menú lateral) -->
     {% include "menu_lateral.html" %}
-<div class="container mx-auto p-6">
-    <h1 class="text-3xl font-semibold">Vehículos</h1>
-    <table class="min-w-full mt-4">
-        <thead>
-            <tr>
-                <th class="px-4 py-2">Marca</th>
-                <th class="px-4 py-2">Modelo</th>
-                <th class="px-4 py-2">Año</th>
-                <th class="px-4 py-2">Color</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for vehiculo in vehiculos %}
-                <tr>
-                    <td class="px-4 py-2">{{ vehiculo.marca }}</td>
-                    <td class="px-4 py-2">{{ vehiculo.modelo }}</td>
-                    <td class="px-4 py-2">{{ vehiculo.año }}</td>
-                    <td class="px-4 py-2">{{ vehiculo.color }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-semibold mb-4">Vehículos</h1>
+        <div class="overflow-x-auto">
+            <table class="table-auto w-full border-collapse border border-gray-300 text-sm">
+                <thead>
+                    <tr class="bg-gray-200 text-left">
+                        <th class="px-2 py-2 border border-gray-300">Marca</th>
+                        <th class="px-2 py-2 border border-gray-300">Modelo</th>
+                        <th class="px-2 py-2 border border-gray-300">Año</th>
+                        <th class="px-2 py-2 border border-gray-300">Color</th>
+                        <th class="px-2 py-2 border border-gray-300">Placas</th>
+                        <th class="px-2 py-2 border border-gray-300">Estado</th>
+                        <th class="px-2 py-2 border border-gray-300">Kilometraje</th>
+                        <th class="px-2 py-2 border border-gray-300">Precio/Día</th>
+                        <th class="px-2 py-2 border border-gray-300">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehiculo in vehiculos %}
+                        <tr class="hover:bg-gray-100">
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.marca }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.modelo }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.año }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.color }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.placas }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.estado }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.kilometraje }}</td>
+                            <td class="px-2 py-2 border border-gray-300">${{ vehiculo.precio_dia }}</td>
+                            <td class="px-2 py-2 border border-gray-300">
+                                <a href="{{ url_for('edit_vehicle', id=vehiculo.id) }}" class="text-blue-600 hover:underline">Editar</a> |
+                                <form action="{{ url_for('delete_vehicle', id=vehiculo.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="text-red-600 hover:underline">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}
+
