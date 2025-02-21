@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,30 +15,62 @@
         }
         main {
             flex: 1;
+            position: relative;
+            z-index: 1;
         }
-        .dropdown-menu {
+        /* Menú móvil */
+        #mobile-menu {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); 
+            color: white;
+            padding: 20px 0;
+            z-index: 50;
         }
-        .dropdown-menu.active {
-            display: block;
+        #mobile-menu.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #mobile-menu ul {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        #mobile-menu ul li {
+            width: 100%;
+            text-align: center;
+            padding: 15px 0;
+        }
+        #close-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: white;
         }
     </style>
     <title>Alquiler de Autos</title>
 </head>
 <body class="bg-white">
-    <header class="bg-black text-white py-2">
+    <header class="bg-black text-white py-2 relative z-50">
         <div class="container mx-auto flex justify-between items-center px-4">
-            <div class="flex-1">
-                <img src="{{ url_for('static', filename='img/carro.jpg') }}" alt="Logo" class="w-12 h-12">
+            
+            <div>
+                <img src="{{ url_for('static', filename='img/Drivenow.png') }}" alt="Logo" class="w-12 h-12">
             </div>
 
-            <!-- Botón de menú para dispositivos móviles -->
-            <button id="menu-toggle" class="block md:hidden text-white focus:outline-none">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <!-- Menú de navegación (visible en pantallas grandes) -->
-            <nav class="hidden md:flex-1 md:flex justify-center items-center text-center">
+            <!-- Menú de navegación en pantallas grandes -->
+            <nav class="hidden md:flex flex-grow justify-center">
                 <ul class="flex space-x-6 text-sm">
                     <li><a href="{{ url_for('index') }}" class="hover:text-gray-300">Inicio</a></li>
                     <li><a href="{{ url_for('contacto') }}" class="hover:text-gray-300">Contacto</a></li>
@@ -46,62 +78,140 @@
                 </ul>
             </nav>
 
-            <!-- Opciones de usuario/login (visible en pantallas grandes) -->
-            <div class="flex-1 text-right hidden md:block">
-                <ul class="flex justify-end space-x-4">
-                    {% if 'user_id' in session %}
-                        <!-- Si el usuario está logueado -->
-                        <li>
-                            <a href="#" class="hover:text-gray-300" id="account-menu-toggle">
-                                <i class="fas fa-user-circle"></i> {{ session['username'] }}
-                            </a>
-                            <!-- Menú desplegable -->
-                            <div id="dropdown-menu" class="dropdown-menu absolute bg-black text-white py-2 px-4 mt-2 right-0 w-48 rounded-md shadow-lg">
-                                <ul>
-                                    {% if session['role'] == 'admin' %}
-                                        <!-- Mostrar Dashboard solo para administradores -->
-                                        <li><a href="{{ url_for('view_vehicles') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Dashboard</a></li>
-                                    {% endif %}
-                                    <!-- Mostrar estas opciones para cualquier usuario logueado -->
-                                    <li><a href="{{ url_for('view_reservations') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Ver Reservas</a></li>
-                                    <li><a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Cerrar sesión</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    {% else %}
-                        <!-- Si el usuario no está logueado -->
-                        <li><a href="{{ url_for('login') }}" class="hover:text-gray-300">Iniciar sesión</a></li>
-                        <li><a href="{{ url_for('register') }}" class="hover:text-gray-300">Registrarse</a></li>
-                    {% endif %}
-                </ul>
-            </div>
+            <!-- Botón de menú móvil -->
+            <button id="menu-toggle" class="block md:hidden text-white focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
 
+            <!-- Opciones de usuario en pantallas grandes -->
+            <div class="hidden md:flex space-x-6">
+                {% if 'user_id' in session %}
+                    <div class="relative">
+                        <button id="account-menu-toggle" class="hover:text-gray-300 flex items-center">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="ml-2">{{ session['username'] }}</span>
+                        </button>
+                        <div id="dropdown-menu" class="absolute right-0 bg-black text-white py-2 px-4 mt-2 w-48 rounded-md shadow-lg hidden">
+                            <ul>
+                                {% if session['role'] == 'admin' %}
+                                    <li><a href="{{ url_for('view_vehicles') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Dashboard</a></li>
+                                {% endif %}
+                                <li><a href="{{ url_for('view_reservations') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Ver Reservas</a></li>
+                                <li><a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Cerrar sesión</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="hover:text-gray-300">Iniciar sesión</a>
+                    <a href="{{ url_for('register') }}" class="hover:text-gray-300">Registrarse</a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <main class="p-6">
+    <!-- Menú desplegable para móviles -->
+    <div id="mobile-menu" class="hidden">
+        <button id="close-menu">&times;</button>
+        <ul>
+            <li><a href="{{ url_for('index') }}" class="block py-4 hover:bg-gray-700">Inicio</a></li>
+            <li><a href="{{ url_for('contacto') }}" class="block py-4 hover:bg-gray-700">Contacto</a></li>
+            <li><a href="{{ url_for('vehicles') }}" class="block py-4 hover:bg-gray-700">Vehículos</a></li>
+            {% if 'user_id' in session %}
+                <li><a href="{{ url_for('view_reservations') }}" class="block py-4 hover:bg-gray-700">Ver Reservas</a></li>
+                {% if session['role'] == 'admin' %}
+                    <li><a href="{{ url_for('view_vehicles') }}" class="block py-4 hover:bg-gray-700">Dashboard</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('logout') }}" class="block py-4 hover:bg-gray-700">Cerrar sesión</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}" class="block py-4 hover:bg-gray-700">Iniciar sesión</a></li>
+                <li><a href="{{ url_for('register') }}" class="block py-4 hover:bg-gray-700">Registrarse</a></li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <main>
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-black text-white py-4 mt-8">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2024 Alquiler de Autos</p>
+    <footer class="bg-black text-white py-10 mt-8">
+        <div class="container mx-auto px-6 lg:px-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Sección 1: Sobre Nosotros -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Sobre Nosotros</h3>
+                    <p class="text-gray-400 text-sm">
+                        DriveNow es una empresa de alquiler de autos con el objetivo de brindar 
+                        comodidad y seguridad en cada viaje. ¡Encuentra tu auto ideal con nosotros!
+                    </p>
+                </div>
+    
+                <!-- Sección 2: Enlaces Rápidos -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Enlaces Rápidos</h3>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                        <li><a href="{{ url_for('index') }}" class="hover:text-gray-300">Inicio</a></li>
+                        <li><a href="{{ url_for('vehicles') }}" class="hover:text-gray-300">Vehículos</a></li>
+                        <li><a href="{{ url_for('contacto') }}" class="hover:text-gray-300">Contacto</a></li>
+                        <li><a href="{{ url_for('login') }}" class="hover:text-gray-300">Iniciar Sesión</a></li>
+                        <li><a href="{{ url_for('register') }}" class="hover:text-gray-300">Registrarse</a></li>
+                    </ul>
+                </div>
+    
+                <!-- Sección 3: Redes Sociales y Contacto -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Síguenos</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram fa-lg"></i></a>
+                    </div>
+                    <h3 class="text-lg font-semibold mt-5 mb-3">Contacto</h3>
+                    <p class="text-gray-400 text-sm">
+                        <i class="fas fa-envelope"></i> contacto@drivenow.com <br>
+                        <i class="fas fa-phone"></i> +51 987 654 321
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-4 text-center">
+                <p class="text-gray-400 text-sm">&copy; 2024 DriveNow - Todos los derechos reservados</p>
+            </div>
         </div>
     </footer>
+    
 
     <script>
         // Funcionalidad para abrir/cerrar el menú móvil
-        document.getElementById('menu-toggle').addEventListener('click', function() {
-            var menu = document.getElementById('menu-toggle');
-            menu.classList.toggle('active');
-            var nav = document.querySelector('nav');
-            nav.classList.toggle('hidden');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeMenu = document.getElementById('close-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        menuToggle.addEventListener('click', function () {
+            mobileMenu.classList.add('active');
         });
 
-        // Funcionalidad para abrir/cerrar el menú desplegable de cuenta
-        document.getElementById('account-menu-toggle').addEventListener('click', function() {
-            var dropdownMenu = document.getElementById('dropdown-menu');
-            dropdownMenu.classList.toggle('active');
+        closeMenu.addEventListener('click', function () {
+            mobileMenu.classList.remove('active');
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!mobileMenu.contains(event.target) && !menuToggle.contains(event.target)) {
+                mobileMenu.classList.remove('active');
+            }
+        });
+
+        // Funcionalidad para abrir/cerrar el menú de usuario
+        document.getElementById('account-menu-toggle')?.addEventListener('click', function (event) {
+            event.stopPropagation();
+            document.getElementById('dropdown-menu').classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (event) {
+            var dropdown = document.getElementById('dropdown-menu');
+            var toggleButton = document.getElementById('account-menu-toggle');
+
+            if (!toggleButton?.contains(event.target) && !dropdown?.contains(event.target)) {
+                dropdown?.classList.add('hidden');
+            }
         });
     </script>
 </body>

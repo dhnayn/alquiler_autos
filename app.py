@@ -6,73 +6,103 @@ app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Función para obtener la conexión a la base de datos
 def get_db_connection():
     connection = pymysql.connect(
-        host="sql10.freesqldatabase.com",
-        user="sql10759281",
-        password="stIEIbDtEf",
-        database="sql10759281",
+        host="localhost",
+        user="root",
+        password="Pekvpass",
+        database="alquiler_autos",
         cursorclass=pymysql.cursors.DictCursor
     )
     return connection
 
-# Ruta de inicio (index)
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Ruta de contacto
 @app.route('/contacto')
 def contacto():
     return render_template('contacto.html')
 
-# Ruta de registro
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        role = 'usuario'  
-        hashed_password = generate_password_hash(password)  
+
+        if not username or not email or not password:
+            flash('Todos los campos son obligatorios.', 'danger')
+            return redirect(url_for('register'))
+
+        role = 'usuario'
+        hashed_password = generate_password_hash(password)
+
         connection = get_db_connection()
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO usuarios (username, email, password, role) VALUES (%s, %s, %s, %s)",
-                       (username, email, hashed_password, role))
-        connection.commit()
-        cursor.close()
-        connection.close()
 
-        flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
-        return redirect(url_for('login'))
+        try:
+            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+            existing_user = cursor.fetchone()
+            if existing_user:
+                flash('El correo ya está registrado. Usa otro correo.', 'danger')
+                return redirect(url_for('register'))
+
+            cursor.execute(
+                "INSERT INTO usuarios (username, email, password, role) VALUES (%s, %s, %s, %s)",
+                (username, email, hashed_password, role)
+            )
+            connection.commit()
+            flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash('Hubo un error al procesar tu registro. Inténtalo más tarde.', 'danger')
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            connection.close()
 
     return render_template('register.html')
 
-# Ruta de login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
+        if not email or not password:
+            flash('Todos los campos son obligatorios.', 'danger')
+            return redirect(url_for('login'))
+
         connection = get_db_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        cursor.close()
-        connection.close()
 
-        if user and check_password_hash(user['password'], password):
+        try:
+            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+            user = cursor.fetchone()
+
+            if not user:
+                flash('El correo no está registrado. Verifica e inténtalo nuevamente.', 'danger')
+                return redirect(url_for('login'))
+
+            if not check_password_hash(user['password'], password):
+                flash('La contraseña es incorrecta. Inténtalo de nuevo.', 'danger')
+                return redirect(url_for('login'))
+
             session['user_id'] = user['id']
             session['username'] = user['username']
-            session['role'] = user['role']  
-            flash(f'Bienvenido, {user["username"]}!', 'success')  
+            session['role'] = user['role']
+            flash(f'Bienvenido, {user["username"]}!', 'success')
             return redirect(url_for('vehicles'))
-        else:
-            flash('Credenciales inválidas. Inténtalo de nuevo.', 'danger')  
+        except Exception as e:
+            flash('Hubo un error al iniciar sesión. Inténtalo más tarde.', 'danger')
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            connection.close()
 
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
@@ -80,11 +110,11 @@ def logout():
     flash('Has cerrado sesión.', 'success')
     return redirect(url_for('index'))
 
-# Ruta de vehículos (ya no requiere sesión)
 @app.route('/vehicles')
+
 def vehicles():
     page = request.args.get('page', 1, type=int)
-    limit = 10  # Número de elementos por página
+    limit = 10 
     offset = (page - 1) * limit
 
     connection = get_db_connection()
@@ -101,11 +131,16 @@ def vehicles():
 
     return render_template('vehicles.html', vehiculos=vehiculos, page=page, total_pages=total_pages)
 
-
-
-
-
-
+@app.route('/')
+def index_vehicles():
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM vehiculos ORDER BY id DESC LIMIT 5") 
+    vehiculos = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    
+    return render_template('index.html', vehiculos=vehiculos)  
 
 @app.route('/view_vehicles')
 def view_vehicles():
@@ -197,8 +232,6 @@ def edit_vehicle(id):
     connection.close()
     return render_template('edit_vehicle.html', vehicle=vehicle, action="Editar" if vehicle else "Añadir")
 
-
-# Ruta para eliminar un vehículo 
 @app.route('/delete_vehicle/<int:id>', methods=['POST'])
 def delete_vehicle(id):
     if 'user_id' not in session or session['role'] != 'admin':
@@ -212,8 +245,6 @@ def delete_vehicle(id):
     connection.close()
     flash('Vehículo eliminado con éxito.', 'success')
     return redirect(url_for('view_vehicles'))
-
-
 
 @app.route('/manage_users')
 def manage_users():
@@ -245,7 +276,6 @@ def update_role(id):
 
     flash('Rol actualizado correctamente.', 'success')
     return redirect(url_for('manage_users'))
-
 
 @app.route('/reserve_vehicle/<int:vehicle_id>', methods=['GET', 'POST'])
 def reserve_vehicle(vehicle_id):
@@ -281,7 +311,6 @@ def reserve_vehicle(vehicle_id):
     connection.close()
     return render_template('vehicle_details.html', vehicle=vehicle)
 
-
 @app.route('/view_reservations')
 def view_reservations():
     if 'user_id' not in session:
@@ -302,7 +331,6 @@ def view_reservations():
 
     return render_template('reservations.html', reservas=reservas)
 
-
 @app.route('/cancel_reservation/<int:reservation_id>', methods=['POST'])
 def cancel_reservation(reservation_id):
     if 'user_id' not in session:
@@ -319,7 +347,6 @@ def cancel_reservation(reservation_id):
     flash('Reservación cancelada con éxito.', 'success')
     return redirect(url_for('view_reservations'))
 
-
 @app.route('/vehicle/<int:vehicle_id>/reserve', methods=['GET'])
 def create_reservation(vehicle_id):
     connection = get_db_connection()
@@ -335,7 +362,6 @@ def create_reservation(vehicle_id):
 
     return render_template('reservation_form.html', vehicle=vehicle)
 
-
 @app.route('/vehicle/<int:vehicle_id>/reserve', methods=['POST'])
 def save_reservation(vehicle_id):
     if 'user_id' not in session:
@@ -346,8 +372,6 @@ def save_reservation(vehicle_id):
     fecha_inicio = request.form['fecha_inicio']
     fecha_fin = request.form['fecha_fin']
     comentarios = request.form['comentarios']
-    
-    # Insertamos los datos de la reserva en la base de datos
     connection = get_db_connection()
     cursor = connection.cursor()
     query = "INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) VALUES (%s, %s, %s, %s, %s, %s)"

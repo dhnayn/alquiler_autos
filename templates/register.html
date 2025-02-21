@@ -1,7 +1,17 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container mx-auto py-8 text-center">
     <h1 class="text-2xl font-bold mb-4">Registro</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="text-center">
+                {% for category, message in messages %}
+                    <p class="text-sm text-red-500">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     <form method="POST" class="space-y-4 max-w-md mx-auto">
         <div>
             <label for="username" class="block font-bold text-sm">Nombre de usuario:</label>
@@ -19,3 +29,4 @@
     </form>
 </div>
 {% endblock %}
+
