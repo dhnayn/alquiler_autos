@@ -96,6 +96,9 @@
                                 {% if session['role'] == 'admin' %}
                                     <li><a href="{{ url_for('view_vehicles') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Dashboard</a></li>
                                 {% endif %}
+                                {% if session['role'] == 'admin' %}
+                                <li><a href="{{ url_for('ingresos') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Ingresos</a></li>
+                                {% endif %}
                                 <li><a href="{{ url_for('view_reservations') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Ver Reservas</a></li>
                                 <li><a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm hover:bg-gray-700">Cerrar sesión</a></li>
                             </ul>
@@ -120,6 +123,9 @@
                 <li><a href="{{ url_for('view_reservations') }}" class="block py-4 hover:bg-gray-700">Ver Reservas</a></li>
                 {% if session['role'] == 'admin' %}
                     <li><a href="{{ url_for('view_vehicles') }}" class="block py-4 hover:bg-gray-700">Dashboard</a></li>
+                {% endif %}
+                {% if session['role'] == 'admin' %}
+                <li><a href="{{ url_for('ingresos') }}" class="block py-4 hover:bg-gray-700">Ingresos</a></li>
                 {% endif %}
                 <li><a href="{{ url_for('logout') }}" class="block py-4 hover:bg-gray-700">Cerrar sesión</a></li>
             {% else %}
@@ -152,6 +158,8 @@
                         <li><a href="{{ url_for('index') }}" class="hover:text-gray-300">Inicio</a></li>
                         <li><a href="{{ url_for('vehicles') }}" class="hover:text-gray-300">Vehículos</a></li>
                         <li><a href="{{ url_for('contacto') }}" class="hover:text-gray-300">Contacto</a></li>
+                        <li><a href="{{ url_for('login') }}" class="hover:text-gray-300">Iniciar Sesión</a></li>
+                        <li><a href="{{ url_for('register') }}" class="hover:text-gray-300">Registrarse</a></li>
                     </ul>
                 </div>
     

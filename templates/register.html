@@ -3,30 +3,83 @@
 {% block content %}
 <div class="container mx-auto py-8 text-center">
     <h1 class="text-2xl font-bold mb-4">Registro</h1>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="text-center">
+            <div class="mb-4">
                 {% for category, message in messages %}
                     <p class="text-sm text-red-500">{{ message }}</p>
                 {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" class="space-y-4 max-w-md mx-auto">
-        <div>
-            <label for="username" class="block font-bold text-sm">Nombre de usuario:</label>
-            <input type="text" id="username" name="username" class="w-full border border-gray-300 p-2 rounded text-sm">
-        </div>
-        <div>
-            <label for="email" class="block font-bold text-sm">Correo Electrónico:</label>
-            <input type="email" id="email" name="email" class="w-full border border-gray-300 p-2 rounded text-sm">
-        </div>
-        <div>
-            <label for="password" class="block font-bold text-sm">Contraseña:</label>
-            <input type="password" id="password" name="password" class="w-full border border-gray-300 p-2 rounded text-sm">
-        </div>
-        <button type="submit" class="bg-black text-white px-4 py-2 rounded text-sm">Registrar</button>
-    </form>
-</div>
-{% endblock %}
 
+    <form method="POST" class="space-y-4 max-w-md mx-auto bg-white shadow-md p-6 rounded-lg">
+        <div class="text-left">
+            <label for="username" class="block font-semibold text-sm">Nombre de usuario:</label>
+            <input type="text" id="username" name="username" required
+                class="w-full border border-gray-300 p-2 rounded text-sm focus:ring focus:ring-blue-300">
+        </div>
+
+        <div class="text-left">
+            <label for="email" class="block font-semibold text-sm">Correo Electrónico:</label>
+            <input type="email" id="email" name="email" required
+                class="w-full border border-gray-300 p-2 rounded text-sm focus:ring focus:ring-blue-300">
+        </div>
+
+        <div class="text-left">
+            <label for="password" class="block font-semibold text-sm">Contraseña:</label>
+            <input type="password" id="password" name="password" required minlength="6"
+                class="w-full border border-gray-300 p-2 rounded text-sm focus:ring focus:ring-blue-300">
+            <small class="text-gray-500 text-xs">Debe tener al menos 6 caracteres.</small>
+        </div>
+
+        <div class="text-left">
+            <label for="region" class="block font-semibold text-sm">Región:</label>
+            <input type="text" id="region" name="region"
+                class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+
+        <!-- Tipo de Cliente -->
+        <div class="text-left">
+            <label for="tipo" class="block font-semibold text-sm">Tipo de Cliente:</label>
+            <select id="tipo" name="tipo" required
+                class="w-full border border-gray-300 p-2 rounded text-sm focus:ring focus:ring-blue-300"
+                onchange="toggleEmpresaField()">
+                <option value="Particular">Particular</option>
+                <option value="Empresa">Empresa</option>
+            </select>
+        </div>
+
+        <!-- Nombre de la Empresa (se muestra solo si es Empresa) -->
+        <div class="text-left hidden" id="empresaField">
+            <label for="nombre_empresa" class="block font-semibold text-sm">Nombre de la Empresa:</label>
+            <input type="text" id="nombre_empresa" name="nombre_empresa"
+                class="w-full border border-gray-300 p-2 rounded text-sm">
+        </div>
+
+        <button type="submit"
+            class="w-full bg-black text-white px-4 py-2 rounded text-sm hover:bg-gray-800 transition">
+            Registrar
+        </button>
+    </form>
+
+    <p class="text-sm text-gray-600 mt-4">
+        ¿Ya tienes cuenta? <a href="{{ url_for('login') }}" class="text-blue-500 hover:underline">Inicia sesión</a>
+    </p>
+</div>
+
+<script>
+    function toggleEmpresaField() {
+        let tipo = document.getElementById("tipo").value;
+        let empresaField = document.getElementById("empresaField");
+
+        if (tipo === "Empresa") {
+            empresaField.classList.remove("hidden");
+        } else {
+            empresaField.classList.add("hidden");
+        }
+    }
+</script>
+
+{% endblock %}

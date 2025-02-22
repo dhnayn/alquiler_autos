@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto py-8 flex flex-col md:flex-row">
+    {% include "menu_lateral.html" %}
+
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-semibold mb-4">Ingresos Generados</h1>
+        <div class="overflow-x-auto">
+            <table class="table-auto w-full border-collapse border border-gray-300 text-sm">
+                <thead>
+                    <tr class="bg-gray-200 text-left">
+                        <th class="px-2 py-2 border border-gray-300">ID</th>
+                        <th class="px-2 py-2 border border-gray-300">Cliente</th>
+                        <th class="px-2 py-2 border border-gray-300">Vehículo</th>
+                        <th class="px-2 py-2 border border-gray-300">Fecha Inicio</th>
+                        <th class="px-2 py-2 border border-gray-300">Fecha Fin</th>
+                        <th class="px-2 py-2 border border-gray-300">Días</th>
+                        <th class="px-2 py-2 border border-gray-300">Precio/Día</th>
+                        <th class="px-2 py-2 border border-gray-300">Costo Adicional</th>
+                        <th class="px-2 py-2 border border-gray-300">Total</th>
+                        <th class="px-2 py-2 border border-gray-300">Fecha Ingreso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingreso in ingresos %}
+                        <tr class="hover:bg-gray-100">
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.id }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.cliente }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.marca }} {{ ingreso.modelo }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.fecha_inicio }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.fecha_fin }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.dias_alquilados }}</td>
+                            <td class="px-2 py-2 border border-gray-300">${{ ingreso.precio_dia }}</td>
+                            <td class="px-2 py-2 border border-gray-300">${{ ingreso.costo_adicional }}</td>
+                            <td class="px-2 py-2 border border-gray-300 font-bold">${{ ingreso.total }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ ingreso.fecha_ingreso }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    let lastIngresos = [];  // Guardará los ingresos anteriores para comparar
+
+    function actualizarTabla() {
+        fetch('/api/ingresos')
+            .then(response => response.json())
+            .then(data => {
+                if (JSON.stringify(data) !== JSON.stringify(lastIngresos)) {
+                    lastIngresos = data;  // Actualiza la referencia a los nuevos datos
+
+                    let tbody = document.querySelector("tbody");
+                    tbody.innerHTML = "";  // Vacía la tabla
+
+                    data.forEach(ingreso => {
+                        let row = `
+                            <tr class="hover:bg-gray-100">
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.id}</td>
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.cliente}</td>
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.marca} ${ingreso.modelo}</td>
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.fecha_inicio}</td>
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.fecha_fin}</td>
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.dias_alquilados}</td>
+                                <td class="px-2 py-2 border border-gray-300">$${ingreso.precio_dia}</td>
+                                <td class="px-2 py-2 border border-gray-300">$${ingreso.costo_adicional}</td>
+                                <td class="px-2 py-2 border border-gray-300 font-bold">$${ingreso.total}</td>
+                                <td class="px-2 py-2 border border-gray-300">${ingreso.fecha_ingreso}</td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                }
+            })
+            .catch(error => console.error("Error al cargar los ingresos:", error));
+    }
+
+    setInterval(actualizarTabla, 5000);  // Verifica cambios cada 5 segundos
+    document.addEventListener("DOMContentLoaded", actualizarTabla);
+</script>
+
+
+{% endblock %}

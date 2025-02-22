@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -24,45 +24,41 @@ def index():
 def contacto():
     return render_template('contacto.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-
-        if not username or not email or not password:
-            flash('Todos los campos son obligatorios.', 'danger')
-            return redirect(url_for('register'))
-
-        role = 'usuario'
-        hashed_password = generate_password_hash(password)
-
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
+    if request.method == "POST":
         try:
-            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
-            existing_user = cursor.fetchone()
-            if existing_user:
-                flash('El correo ya está registrado. Usa otro correo.', 'danger')
-                return redirect(url_for('register'))
+            username = request.form["username"]
+            email = request.form["email"]
+            password = request.form["password"]
+            region = request.form.get("region", None)
+            tipo = request.form.get("tipo", "Particular")  
+            nombre_empresa = request.form.get("nombre_empresa") if tipo == "Empresa" else None
 
-            cursor.execute(
-                "INSERT INTO usuarios (username, email, password, role) VALUES (%s, %s, %s, %s)",
-                (username, email, hashed_password, role)
-            )
-            connection.commit()
-            flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
-            return redirect(url_for('login'))
-        except Exception as e:
-            flash('Hubo un error al procesar tu registro. Inténtalo más tarde.', 'danger')
-            print(f"Error: {e}")
-        finally:
+            if not username or not email or not password:
+                flash("Todos los campos son obligatorios.", "error")
+                return redirect(url_for("register"))
+
+            hashed_password = generate_password_hash(password)
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            sql = "INSERT INTO usuarios (username, email, password, region, tipo, nombre_empresa) VALUES (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, (username, email, hashed_password, region, tipo, nombre_empresa))
+
+            conn.commit()
             cursor.close()
-            connection.close()
+            conn.close()
 
-    return render_template('register.html')
+            flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
+            return redirect(url_for("login"))
+
+        except Exception as e:
+            flash(f"Error al registrar usuario: {str(e)}", "error")
+            return redirect(url_for("register"))
+
+    return render_template("register.html")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -92,8 +88,11 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
+            session['tipo'] = user['tipo']
+            session['region'] = user['region']
+
             flash(f'Bienvenido, {user["username"]}!', 'success')
-            return redirect(url_for('vehicles'))
+            return redirect(url_for('vehicles'))  
         except Exception as e:
             flash('Hubo un error al iniciar sesión. Inténtalo más tarde.', 'danger')
             print(f"Error: {e}")
@@ -102,7 +101,6 @@ def login():
             connection.close()
 
     return render_template('login.html')
-
 
 @app.route('/logout')
 def logout():
@@ -149,16 +147,26 @@ def view_vehicles():
 
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM vehiculos")
+    
+    cursor.execute("""
+        SELECT v.id, v.marca, v.modelo, v.año, v.color, v.placas, v.estado, 
+               v.kilometraje, v.precio_dia, t.nombre AS tipo 
+        FROM vehiculos v
+        LEFT JOIN tipos_vehiculo t ON v.tipo_id = t.id
+    """)
+    
     vehiculos = cursor.fetchall()
     cursor.close()
     connection.close()
+    
     return render_template('view_vehicles.html', vehiculos=vehiculos)
+
 
 @app.route('/add_vehicle', methods=['GET', 'POST'])
 def add_vehicle():
     if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
+
 
     if request.method == 'POST':
         marca = request.form['marca']
@@ -169,13 +177,14 @@ def add_vehicle():
         estado = request.form['estado']
         kilometraje = request.form['kilometraje']
         precio_dia = request.form['precio_dia']
+        tipo_id = request.form['tipo_id']
 
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO vehiculos (marca, modelo, año, color, placas, estado, kilometraje, precio_dia) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (marca, modelo, año, color, placas, estado, kilometraje, precio_dia)
+            "INSERT INTO vehiculos (marca, modelo, año, color, placas, estado, kilometraje, precio_dia, tipo_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (marca, modelo, año, color, placas, estado, kilometraje, precio_dia, tipo_id)
         )
         connection.commit()
         cursor.close()
@@ -183,21 +192,29 @@ def add_vehicle():
         flash('Vehículo añadido con éxito.', 'success')
         return redirect(url_for('view_vehicles'))
 
-    return render_template('edit_vehicle.html', action="Añadir")
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT id, nombre FROM tipo_vehiculo")
+    tipos = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('edit_vehicle.html', action="Añadir", tipos=tipos)
+
 
 @app.route('/edit_vehicle/<int:id>', methods=['GET', 'POST'])
 def edit_vehicle(id):
     if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     connection = get_db_connection()
     cursor = connection.cursor()
 
-    if id == 0:
-        vehicle = None
-    else:
-        cursor.execute("SELECT * FROM vehiculos WHERE id = %s", (id,))
-        vehicle = cursor.fetchone()
+    cursor.execute("SELECT id, nombre FROM tipos_vehiculo")
+    tipos = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM vehiculos WHERE id = %s", (id,))
+    vehicle = cursor.fetchone()
 
     if request.method == 'POST':
         marca = request.form['marca']
@@ -208,34 +225,30 @@ def edit_vehicle(id):
         estado = request.form['estado']
         kilometraje = request.form['kilometraje']
         precio_dia = request.form['precio_dia']
+        tipo_id = request.form['tipo_id']
 
-        if vehicle:
-            cursor.execute(
-                "UPDATE vehiculos SET marca = %s, modelo = %s, año = %s, color = %s, placas = %s, estado = %s, "
-                "kilometraje = %s, precio_dia = %s WHERE id = %s",
-                (marca, modelo, año, color, placas, estado, kilometraje, precio_dia, id)
-            )
-        else:
-            cursor.execute(
-                "INSERT INTO vehiculos (marca, modelo, año, color, placas, estado, kilometraje, precio_dia) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                (marca, modelo, año, color, placas, estado, kilometraje, precio_dia)
-            )
+        cursor.execute(
+            "UPDATE vehiculos SET marca = %s, modelo = %s, año = %s, color = %s, placas = %s, estado = %s, "
+            "kilometraje = %s, precio_dia = %s, tipo_id = %s WHERE id = %s",
+            (marca, modelo, año, color, placas, estado, kilometraje, precio_dia, tipo_id, id)
+        )
 
         connection.commit()
         cursor.close()
         connection.close()
-        flash('Vehículo guardado exitosamente.', 'success')
+        flash('Vehículo actualizado con éxito.', 'success')
         return redirect(url_for('view_vehicles'))
 
     cursor.close()
     connection.close()
-    return render_template('edit_vehicle.html', vehicle=vehicle, action="Editar" if vehicle else "Añadir")
+    return render_template('edit_vehicle.html', vehicle=vehicle, tipos=tipos, action="Editar")
+
+
 
 @app.route('/delete_vehicle/<int:id>', methods=['POST'])
 def delete_vehicle(id):
     if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -249,7 +262,7 @@ def delete_vehicle(id):
 @app.route('/manage_users')
 def manage_users():
     if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -263,7 +276,7 @@ def manage_users():
 @app.route('/update_role/<int:id>', methods=['POST'])
 def update_role(id):
     if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     role = request.form['role']
 
@@ -284,32 +297,46 @@ def reserve_vehicle(vehicle_id):
         return redirect(url_for('login'))
 
     connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM vehiculos WHERE id = %s", (vehicle_id,))
-    vehicle = cursor.fetchone()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)  
 
-    if not vehicle:
-        flash('El vehículo no existe.', 'danger')
-        return redirect(url_for('vehicles'))
+    try:
+        cursor.execute("SELECT * FROM vehiculos WHERE id = %s", (vehicle_id,))
+        vehicle = cursor.fetchone()
 
-    if request.method == 'POST':
-        user_id = session['user_id']
-        nombre = request.form['nombre']
-        fecha_inicio = request.form['fecha_inicio']
-        fecha_fin = request.form['fecha_fin']
-        comentarios = request.form['comentarios']
-        
-        cursor.execute(
-            "INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, vehicle_id, nombre, fecha_inicio, fecha_fin, comentarios)
-        )
-        connection.commit()
-        flash('Reservación realizada exitosamente.', 'success')
-        return redirect(url_for('view_reservations'))
+        if not vehicle:
+            flash('El vehículo no existe.', 'danger')
+            return redirect(url_for('vehicles'))
 
-    cursor.close()
-    connection.close()
-    return render_template('vehicle_details.html', vehicle=vehicle)
+        cursor.execute("SELECT tipo, nombre_empresa, region FROM usuarios WHERE id = %s", (session['user_id'],))
+        user_data = cursor.fetchone()
+
+        if request.method == 'POST':
+            user_id = session['user_id']
+            nombre = request.form['nombre']
+            fecha_inicio = request.form['fecha_inicio']
+            fecha_fin = request.form['fecha_fin']
+            comentarios = request.form.get('comentarios', '')  
+
+            cursor.execute(
+                """INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) 
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (user_id, vehicle_id, nombre, fecha_inicio, fecha_fin, comentarios)
+            )
+            connection.commit()
+            flash('Reservación realizada exitosamente.', 'success')
+            return redirect(url_for('view_reservations'))
+
+    except pymysql.MySQLError as e:
+        flash(f'Error en la base de datos: {e}', 'danger')
+        connection.rollback()
+
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return render_template('vehicle_details.html', vehicle=vehicle, user_data=user_data)
+
+
 
 @app.route('/view_reservations')
 def view_reservations():
@@ -319,17 +346,25 @@ def view_reservations():
 
     connection = get_db_connection()
     cursor = connection.cursor()
+
     cursor.execute("""
-        SELECT r.id AS reserva_id, v.marca, v.modelo, v.año, v.color, v.precio_dia, r.fecha_inicio, r.fecha_fin, r.comentarios
+        SELECT r.id AS reserva_id, v.marca, v.modelo, v.año, v.color, v.precio_dia, 
+               r.fecha_inicio, r.fecha_fin, r.comentarios, 
+               u.tipo AS tipo_cliente, u.nombre_empresa, u.region
         FROM reserva r
         JOIN vehiculos v ON r.vehiculo_id = v.id
+        JOIN usuarios u ON r.user_id = u.id
         WHERE r.user_id = %s
     """, (session['user_id'],))
-    reservas = cursor.fetchall()
+
+    reservas = cursor.fetchall()  
+    
     cursor.close()
     connection.close()
 
     return render_template('reservations.html', reservas=reservas)
+
+
 
 @app.route('/cancel_reservation/<int:reservation_id>', methods=['POST'])
 def cancel_reservation(reservation_id):
@@ -372,18 +407,96 @@ def save_reservation(vehicle_id):
     fecha_inicio = request.form['fecha_inicio']
     fecha_fin = request.form['fecha_fin']
     comentarios = request.form['comentarios']
+
     connection = get_db_connection()
     cursor = connection.cursor()
-    query = "INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) VALUES (%s, %s, %s, %s, %s, %s)"
-    values = (session['user_id'], vehicle_id, nombre, fecha_inicio, fecha_fin, comentarios)
-    cursor.execute(query, values)
+
+    query_reserva = """
+        INSERT INTO reserva (user_id, vehiculo_id, nombre, fecha_inicio, fecha_fin, comentarios) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    values_reserva = (session['user_id'], vehicle_id, nombre, fecha_inicio, fecha_fin, comentarios)
+    cursor.execute(query_reserva, values_reserva)
+    reserva_id = cursor.lastrowid  
+
+    query_ingreso = """
+        INSERT INTO ingresos (reserva_id, vehiculo_id, total)
+        SELECT %s, v.id, (DATEDIFF(%s, %s) + 1) * v.precio_dia
+        FROM vehiculos v
+        WHERE v.id = %s
+    """
+    values_ingreso = (reserva_id, fecha_fin, fecha_inicio, vehicle_id)
+    cursor.execute(query_ingreso, values_ingreso)
+
     connection.commit()
-    
     cursor.close()
     connection.close()
 
     flash('Reserva confirmada con éxito.', 'success')
     return redirect(url_for('vehicles'))
+
+
+@app.route('/api/ingresos')
+def api_ingresos():
+    connection = get_db_connection()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    
+    cursor.execute("""
+        SELECT 
+            i.id,
+            r.nombre AS cliente,
+            v.marca,
+            v.modelo,
+            r.fecha_inicio,
+            r.fecha_fin,
+            (DATEDIFF(r.fecha_fin, r.fecha_inicio) + 1) AS dias_alquilados,
+            v.precio_dia,
+            r.costo_adicional,
+            i.total,
+            i.fecha AS fecha_ingreso
+        FROM ingresos i
+        JOIN reserva r ON i.reserva_id = r.id
+        JOIN vehiculos v ON i.vehiculo_id = v.id;
+    """)
+    
+    ingresos = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return jsonify(ingresos)
+
+
+@app.route('/ingresos')
+def ingresos():
+    connection = get_db_connection()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)  
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+    
+    cursor.execute("""
+        SELECT 
+            i.id,
+            r.nombre AS cliente,
+            v.marca,
+            v.modelo,
+            r.fecha_inicio,
+            r.fecha_fin,
+            (DATEDIFF(r.fecha_fin, r.fecha_inicio) + 1) AS dias_alquilados,
+            v.precio_dia,
+            r.costo_adicional,
+            i.total,
+            i.fecha AS fecha_ingreso
+        FROM ingresos i
+        JOIN reserva r ON i.reserva_id = r.id
+        JOIN vehiculos v ON i.vehiculo_id = v.id;
+    """)
+    
+    ingresos = cursor.fetchall() 
+    cursor.close()
+    connection.close()
+
+    return render_template('ingresos.html', ingresos=ingresos)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

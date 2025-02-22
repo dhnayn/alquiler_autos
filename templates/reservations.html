@@ -15,6 +15,9 @@
                 <th class="border border-gray-300 px-4 py-2">Precio/día</th>
                 <th class="border border-gray-300 px-4 py-2">Fecha de Inicio</th>
                 <th class="border border-gray-300 px-4 py-2">Fecha de Fin</th>
+                <th class="border border-gray-300 px-4 py-2">Tipo de Cliente</th>
+                <th class="border border-gray-300 px-4 py-2">Nombre de Empresa</th>
+                <th class="border border-gray-300 px-4 py-2">Región</th>
             </tr>
         </thead>
         <tbody>
@@ -27,6 +30,11 @@
                 <td class="border border-gray-300 px-4 py-2">${{ reserva['precio_dia'] }}</td>
                 <td class="border border-gray-300 px-4 py-2">{{ reserva['fecha_inicio'] }}</td>
                 <td class="border border-gray-300 px-4 py-2">{{ reserva['fecha_fin'] }}</td>
+                <td class="border border-gray-300 px-4 py-2">{{ reserva['tipo_cliente'] }}</td>
+                <td class="border border-gray-300 px-4 py-2">
+                    {{ reserva['nombre_empresa'] if reserva['nombre_empresa'] else 'N/A' }}
+                </td>
+                <td class="border border-gray-300 px-4 py-2">{{ reserva['region'] }}</td>
             </tr>
             {% endfor %}
         </tbody>

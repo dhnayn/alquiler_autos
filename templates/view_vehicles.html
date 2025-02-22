@@ -18,6 +18,7 @@
                         <th class="px-2 py-2 border border-gray-300">Estado</th>
                         <th class="px-2 py-2 border border-gray-300">Kilometraje</th>
                         <th class="px-2 py-2 border border-gray-300">Precio/Día</th>
+                        <th class="px-2 py-2 border border-gray-300">Tipo de Vehículo</th>
                         <th class="px-2 py-2 border border-gray-300">Acciones</th>
                     </tr>
                 </thead>
@@ -32,6 +33,7 @@
                             <td class="px-2 py-2 border border-gray-300">{{ vehiculo.estado }}</td>
                             <td class="px-2 py-2 border border-gray-300">{{ vehiculo.kilometraje }}</td>
                             <td class="px-2 py-2 border border-gray-300">${{ vehiculo.precio_dia }}</td>
+                            <td class="px-2 py-2 border border-gray-300">{{ vehiculo.tipo }}</td>
                             <td class="px-2 py-2 border border-gray-300">
                                 <a href="{{ url_for('edit_vehicle', id=vehiculo.id) }}" class="text-blue-600 hover:underline">Editar</a> |
                                 <form action="{{ url_for('delete_vehicle', id=vehiculo.id) }}" method="POST" style="display:inline;">
@@ -46,3 +48,4 @@
     </div>
 </div>
 {% endblock %}
+
